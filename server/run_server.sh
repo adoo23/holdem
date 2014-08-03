@@ -1,3 +1,4 @@
 #!/bin/bash
 
-./server 12345 3 10 2>&1 | tee run.log
+mkdir -p $2
+./server 12345 $1 1000 $2/log

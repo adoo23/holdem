@@ -483,8 +483,8 @@ typename Client::LOOP_RESULT Client::bet_loop(std::function<decision_type ()> ge
 			return LOOP_MSG_ERROR;
 		}
 
-		if (!(iss >> pot_id) || (size_t) pot_id != pots.size()) {
-			ERR_OUTPUT("[ERROR] unexpected message, no pot_id found or pot_id != pot.size()\n");
+		if (!(iss >> pot_id) || (size_t) pot_id > pots.size()) {
+			ERR_OUTPUT("[ERROR] unexpected message, pot_id > pot.size()\n");
 			return LOOP_MSG_ERROR;
 		}
 
@@ -503,6 +503,7 @@ typename Client::LOOP_RESULT Client::bet_loop(std::function<decision_type ()> ge
 			return LOOP_MSG_ERROR;
 		}
 
+
 		Pot pot(0);
 		int player;
 		while ((iss >> player)) {
@@ -515,7 +516,16 @@ typename Client::LOOP_RESULT Client::bet_loop(std::function<decision_type ()> ge
 		}
 
 		pot.set_chips(pot_amount / pot.contributors().size());
-		pots.emplace_back(std::move(pot));
+		
+		if (pot_id + 1 == pots.size()) {
+			if (!pots.back().merge(pot)) {
+				ERR_OUTPUT("[ERROR] the pots should be able to be merged\n");
+				return LOOP_MSG_ERROR;
+			}
+		}
+		else {
+			pots.emplace_back(std::move(pot));
+		}
 
 		receive(msg);
 	}
@@ -774,4 +784,12 @@ typename Client::LOOP_RESULT Client::receive_winner() {
 	}
 
 	return LOOP_NORMAL;
+}
+
+void Client::show_final_stat() {
+	OUTPUT("[FINAL STAT] chips\n");
+	
+	for (size_t i = 0; i < names.size(); ++i) {
+		OUTPUT("[FINAL STAT] %s has %d chips\n", names[i].c_str(), chips[i]);
+	}
 }

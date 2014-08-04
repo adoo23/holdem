@@ -25,7 +25,7 @@ public:
 	void game_end();
 
 	int pick(hand_type &hand,int n);
-	int get_high();
+	int get_delta();
 
 private:
 	Query query;

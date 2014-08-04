@@ -290,7 +290,7 @@ void Player::login_name(std::string name) {
 #define PRINT_CARD(card) \
 	std::cout << "[UI] " << rank_of(card.first) << ' ' << suit_of(card.second) << std::endl
 
-int Player::get_high(){
+int Player::get_delta(){
 	int n=query.number_of_players();
 	int k=query.my_id();
 	int max=0;
@@ -305,9 +305,11 @@ int Player::get_high(){
 decision_type Player::preflop() {
 	int a=convert_rank(query.hole_cards()[0]);
 	int b=convert_rank(query.hole_cards()[1]);
-	int h=get_high();
+	int d=get_delta();
 	bool flag;
-	if(h>=200){
+	if(a==b){
+		flag=true;
+	}else if(d>=200){
 		if(a+b>=20){
 			flag=true;
 		}else flag=false;
@@ -316,10 +318,13 @@ decision_type Player::preflop() {
 			flag=true;
 		}else flag=false;
 	}
-	return make_decision(CALL);
+	if(flag) return make_decision(CALL);
+	else return make_decision(FOLD);
 }
 
 decision_type Player::flop() {
+	int d=get_delta();
+	if(d==0) return make_decision(CALL);
 	hand_type hand;
 	if(pick(hand,3)){
 		return make_decision(CALL);	
@@ -329,6 +334,8 @@ decision_type Player::flop() {
 }
 
 decision_type Player::turn() {
+	int d=get_delta();
+	if(d==0) return make_decision(CALL);
 	hand_type hand;
 	if(pick(hand,4)>1){
 		return make_decision(CALL);	
@@ -338,6 +345,8 @@ decision_type Player::turn() {
 }
 
 decision_type Player::river() {
+	int d=get_delta();
+	if(d==0) return make_decision(CALL);
 	hand_type hand;
 	if(pick(hand,5)>1){
 		return make_decision(CALL);	

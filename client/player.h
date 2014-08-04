@@ -24,6 +24,9 @@ public:
 	hand_type showdown();
 	void game_end();
 
+	int pick(hand_type &hand,int n);
+	int get_high();
+
 private:
 	Query query;
 

@@ -310,7 +310,9 @@ decision_type Player::preflop() {
 	if(a==b){
 		flag=true;
 	}else if(d>=200){
-		if(a+b>=20){
+		int bl=query.blind();
+		if(d/bl>=3) flag=false;
+		else if(a+b>=20){
 			flag=true;
 		}else flag=false;
 	}else{
@@ -348,6 +350,8 @@ decision_type Player::river() {
 	int d=get_delta();
 	if(d==0) return make_decision(CALL);
 	hand_type hand;
+	int p=pick(hand,5);
+	if((p>=1)&&(query.number_of_players()<=3)) make_decision(CALL);
 	if(pick(hand,5)>1){
 		return make_decision(CALL);	
 	}else{

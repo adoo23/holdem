@@ -26,6 +26,7 @@ public:
 
 	int pick(hand_type &hand,int n);
 	int get_delta();
+	int get_avai();
 
 private:
 	Query query;

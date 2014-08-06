@@ -60,7 +60,7 @@ void sort_cards_suit(card_list &cards,int n){
 	}
 }
 
-bool check_straight(card_list &cards,hand_type &hand,int n){
+bool check_flush(card_list &cards,hand_type &hand,int n){
 	//sort_cards_suit(cards,n);
 	char c;
 	for(int i=0;i<4;++i){
@@ -84,7 +84,7 @@ bool check_straight(card_list &cards,hand_type &hand,int n){
 	return false;
 }
 
-bool check_flush(card_list &cards,hand_type &hand,int n){
+bool check_straight(card_list &cards,hand_type &hand,int n){
 	sort_cards_rank(cards,n);
 	int cnt=1;
 	hand[0]=cards[0];
@@ -229,9 +229,9 @@ int Player::pick(hand_type &hand,int n){
 		flag=7;
 	}else if(check_full_house(all_cards,hand,n)){
 		flag=6;
-	}else if(check_flush(all_cards,hand,n)){
-		flag=5;
 	}else if(check_straight(all_cards,hand,n)){
+		flag=5;
+	}else if(check_flush(all_cards,hand,n)){
 		flag=4;
 	}else if(check_three(all_cards,hand,n)){
 		flag=3;
@@ -302,6 +302,11 @@ int Player::get_delta(){
 	return max-query.current_bets(k);
 }
 
+int Player::get_avai(){
+	int k=query.my_id();
+	return query.chips()[k];
+}
+
 decision_type Player::preflop() {
 	int a=convert_rank(query.hole_cards()[0]);
 	int b=convert_rank(query.hole_cards()[1]);
@@ -328,6 +333,8 @@ decision_type Player::flop() {
 	int d=get_delta();
 	if(d==0) return make_decision(CALL);
 	hand_type hand;
+	int p=pick(hand,3);
+	if(p>=4) make_decision(RAISE,get_avai());
 	if(pick(hand,3)){
 		return make_decision(CALL);	
 	}else{
@@ -339,7 +346,9 @@ decision_type Player::turn() {
 	int d=get_delta();
 	if(d==0) return make_decision(CALL);
 	hand_type hand;
-	if(pick(hand,4)>1){
+	int p=pick(hand,4);
+	if(p>=4) make_decision(RAISE,get_avai());
+	if(p>1){
 		return make_decision(CALL);	
 	}else{
 		return make_decision(FOLD);	
@@ -351,6 +360,7 @@ decision_type Player::river() {
 	if(d==0) return make_decision(CALL);
 	hand_type hand;
 	int p=pick(hand,5);
+	if(p>=4) make_decision(RAISE,get_avai());
 	if((p>=1)&&(query.number_of_players()<=3)) make_decision(CALL);
 	if(pick(hand,5)>1){
 		return make_decision(CALL);	

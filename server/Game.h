@@ -10,6 +10,7 @@
 #include <cctype>
 #include <iostream>
 #include <cstdio>
+#include <cstdlib>
 #include "Card.h"
 #include "Deck.h"
 #include "IO.h"
@@ -49,6 +50,7 @@ public:
     Game(IO &io, const std::vector<std::string> &names, int init_chips)
         : io(io), names(names), chips(names.size(), init_chips), blind(1), n(names.size()), dealer(n-1), hole_cards(n), current_bets(n), actioned(n, false), checked(n, false), folded(n, false), game_cnt(0), log(Log::get_instance()), survival_time(n, 0) 
     {
+		dealer = rand() % n;
     }
 
     int run(int the_blind)
@@ -61,6 +63,8 @@ public:
 		
 		log.detailed_out() << std::endl << ">=========================================>" << std::endl;
 		log.out() << "[GAME " << game_cnt << "] starts" << std::endl;
+		log.msg() << std::endl << ">=========================================>" << std::endl;
+		log.msg() << "[GAME " << game_cnt << "] starts" << std::endl;
         broadcast("game starts");
 
 		for (auto player : player_list) {
@@ -390,9 +394,9 @@ private:
 		int straight_leading = -1;
 		{
 			// special case of A, 2, 3, 4, 5
-			if (hand[0].rank == 14 && hand[4].rank == 5 
-				&& hand[1].rank == 2 && hand[2].rank == 3
-				&& hand[3].rank == 4) {
+			if (hand[0].rank == 14 && hand[1].rank == 5 
+				&& hand[4].rank == 2 && hand[3].rank == 3
+				&& hand[2].rank == 4) {
 				straight_leading = 5;
 			}
 
@@ -796,9 +800,22 @@ private:
         vsnprintf(buffer, 4096, format, args);
 
 		log.msg() << "[broadcast] " << buffer << std::endl;
+	
+		int player = 0;
+        try {
+			std::string msg(buffer);
+			for ( ; player < n; ++player) {
+				io.send(player, msg);
+			}
+		}
+		catch (...) {
+			log.msg() << "[Exception] when broadcasting to " << name_of(player) << std::endl;
+			log.detailed_out() << "[Exception] when broadcasting to " << name_of(player) << std::endl;
+			log.err() << "Exception: when broadcasting to " << name_of(player) << std::endl;
 
-        io.broadcast(std::string(buffer));
-        va_end(args);
+			throw ;
+		}
+		va_end(args);
     }
 
     void send(int player, const char *format, ...)
@@ -808,16 +825,35 @@ private:
         va_start(args, format);
         vsnprintf(buffer, 4096, format, args);
 		
-		log.msg() << "[send to " << name_of(player) << "] " << buffer << std::endl;
+		log.msg() << "[send] (" << name_of(player) << ") " << buffer << std::endl;
+		
+		try {
+        	io.send(player, std::string(buffer));
+        }
+		catch (...) {
+			log.msg() << "[Exception] when sending to " << name_of(player) << std::endl;
+			log.detailed_out() << "[Exception] when sending to " << name_of(player) << std::endl;
+			log.err() << "Exception: when sending to " << name_of(player) << std::endl;
 
-        io.send(player, std::string(buffer));
-        va_end(args);
+			throw ;
+		}
+		va_end(args);
     }
 
     void receive(int player, std::string &message)
     {
-        io.receive(player, message);
-		log.msg() << "[receive from " << name_of(player) << "] " << message << std::endl;
+		try {
+        	io.receive(player, message);
+		}
+		catch (...) {
+			log.msg() << "[Exception] when receiving from " << name_of(player) << std::endl;
+			log.detailed_out() << "[Exception] when receiving from " << name_of(player) << std::endl;
+			log.err() << "Exception: when receiving from " << name_of(player) << std::endl;
+
+			throw ;
+		}
+
+		log.msg() << "[receive] (" << name_of(player) << ") " << message << std::endl;
 	}
 
 	// Deprecated

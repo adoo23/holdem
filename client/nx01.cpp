@@ -86,11 +86,12 @@ bool check_flush(card_list &cards,hand_type &hand,int n){
 
 bool check_straight(card_list &cards,hand_type &hand,int n){
 	sort_cards_rank(cards,n);
-	int cnt=1;
+	/*int cnt=1;
 	hand[0]=cards[0];
-	for(int i=0;i<n;++i){
+	for(int i=0;i<n;){
 		int j=i+1;
 		for(;(j<n)&&(convert_rank(cards[j])==convert_rank(cards[i]));++j);
+		if(j>=n) break;
 		if(convert_rank(cards[j])+1==convert_rank(cards[i])){
 			hand[cnt]=cards[j];
 			++cnt;
@@ -98,6 +99,20 @@ bool check_straight(card_list &cards,hand_type &hand,int n){
 		}else{
 			cnt=1;
 			hand[0]=cards[j];
+		}
+		i=j+1;
+	}*/
+	for(int i=0;i<n;++i){
+		int cnt=0;
+		hand[0]=cards[i];
+		int j=i+1;
+		for(;(j<n);++j){
+			if(convert_rank(cards[j])+1==convert_rank(hand[cnt])){
+				hand[++cnt]=cards[j];
+				if(cnt==4){
+					return true;
+				}
+			}
 		}
 	}
 	return false;
@@ -111,6 +126,36 @@ bool check_straight_flush(card_list &cards,hand_type &hand,int n){
 			return true;
 		}
 	}*/
+	/*sort_cards_rank(cards,n);
+	int cnt=1;
+	hand[0]=cards[0];
+	for(int i=0;i<n;++i){
+		int j=i+1;
+		for(;(j<n)&&(convert_rank(cards[j])==convert_rank(cards[i]));++j);
+		for(;(j<n)&&(convert_rank(cards[j])+1==convert_rank(cards[i]))&&
+				(cards[j].second!=cards[i].second);++j);
+		if((convert_rank(cards[j])+1==convert_rank(cards[i]))){
+			hand[cnt]=cards[j];
+			++cnt;
+			if(cnt==5) return true;
+		}else{
+			cnt=1;
+			hand[0]=cards[j];
+		}
+	}*/
+	for(int i=0;i<n;++i){
+		int cnt=0;
+		hand[0]=cards[i];
+		int j=i+1;
+		for(;(j<n);++j){
+			if((convert_rank(cards[j])+1==convert_rank(hand[cnt]))&&(cards[j].second==hand[cnt].second)){
+				hand[++cnt]=cards[j];
+				if(cnt==4){
+					return true;
+				}
+			}
+		}
+	}
 	return false;
 }
 
@@ -119,6 +164,7 @@ bool check_four(card_list &cards,hand_type &hand,int n){
 	for(int i=0;i<n;++i){
 		int j=i+1;
 		for(;(j<n)&&(convert_rank(cards[j])==convert_rank(cards[i]));++j);
+		if(j>=n) break;
 		if(j-i==4){
 			for(int k=i;k<j;++k){
 				hand[k-i]=cards[k];
@@ -137,6 +183,7 @@ bool check_three(card_list &cards,hand_type &hand,int n){
 	for(int i=0;i<n;++i){
 		int j=i+1;
 		for(;(j<n)&&(convert_rank(cards[j])==convert_rank(cards[i]));++j);
+		if(j>=n) break;
 		if(j-i==3){
 			for(int k=i;k<j;++k){
 				hand[k-i]=cards[k];
@@ -241,7 +288,7 @@ int Player::pick(hand_type &hand,int n){
 		flag=1;
 	}
 	if(!flag){
-		sort_cards_rank(all_cards,7);
+		sort_cards_rank(all_cards,n);
 		for(int i=0;i<5;++i) hand[i]=all_cards[i];
 		flag=0;
 	}
@@ -307,16 +354,25 @@ int Player::get_avai(){
 	return query.chips()[k];
 }
 
+int Player::get_pp(){
+	const std::vector<PLAYER_STATUS>	ps=query.player_status();
+	int n=ps.size();
+	int cnt=0;
+	for(int i=0;i<n;++i)
+		if(ps[i]!=FOLDED) ++cnt;
+	return cnt;
+}
+
 decision_type Player::preflop() {
 	int a=convert_rank(query.hole_cards()[0]);
 	int b=convert_rank(query.hole_cards()[1]);
 	int d=get_delta();
+	int bl=query.blind();
 	bool flag;
 	if(a==b){
 		flag=true;
-	}else if(d>=200){
-		int bl=query.blind();
-		if(d/bl>=3) flag=false;
+	}else if(d>bl){
+		if(d>bl*3) flag=false;
 		else if(a+b>=20){
 			flag=true;
 		}else flag=false;
@@ -326,7 +382,7 @@ decision_type Player::preflop() {
 		}else flag=false;
 	}
 	if(flag) return make_decision(CALL);
-	else return make_decision(FOLD);
+	else return make_decision(CHECK);
 }
 
 decision_type Player::flop() {
@@ -334,11 +390,21 @@ decision_type Player::flop() {
 	if(d==0) return make_decision(CALL);
 	hand_type hand;
 	int p=pick(hand,3);
+	std::cout<<p<<std::endl;
 	if(p>=4) make_decision(RAISE,get_avai());
-	if(pick(hand,3)){
-		return make_decision(CALL);	
+	if((p>=1)&&(get_pp()<=3)) make_decision(CALL);
+	if(d>=300){
+		if(p>=3){
+			return make_decision(CALL);	
+		}else{
+			return make_decision(CHECK);
+		}
 	}else{
-		return make_decision(FOLD);	
+		if(p>=2){
+			return make_decision(CALL);
+		}else{
+			return make_decision(CHECK);
+		}
 	}
 }
 
@@ -347,11 +413,21 @@ decision_type Player::turn() {
 	if(d==0) return make_decision(CALL);
 	hand_type hand;
 	int p=pick(hand,4);
+	std::cout<<p<<std::endl;
 	if(p>=4) make_decision(RAISE,get_avai());
-	if(p>1){
-		return make_decision(CALL);	
+	if((p>=1)&&(get_pp()<=3)) make_decision(CALL);
+	if(d>=300){
+		if(p>=4){
+			return make_decision(CALL);	
+		}else{
+			return make_decision(CHECK);	
+		}
 	}else{
-		return make_decision(FOLD);	
+		if(p>=2){
+			return make_decision(CALL);
+		}else{
+			return make_decision(CHECK);
+		}
 	}
 }
 
@@ -360,12 +436,21 @@ decision_type Player::river() {
 	if(d==0) return make_decision(CALL);
 	hand_type hand;
 	int p=pick(hand,5);
+	std::cout<<p<<std::endl;
 	if(p>=4) make_decision(RAISE,get_avai());
-	if((p>=1)&&(query.number_of_players()<=3)) make_decision(CALL);
-	if(pick(hand,5)>1){
-		return make_decision(CALL);	
+	if((p>=1)&&(get_pp()<=3)) make_decision(CALL);
+	if(d>=300){
+		if(p>=4){
+			return make_decision(CALL);	
+		}else{
+			return make_decision(FOLD);	
+		}
 	}else{
-		return make_decision(FOLD);	
+		if(p>=2){
+			return make_decision(CALL);
+		}else{
+			return make_decision(CHECK);
+		}
 	}
 }
 
@@ -394,7 +479,8 @@ hand_type Player::showdown() {
 					else card = community_cards[id - 2];
 			});
 			*/
-	pick(hand,5);
+	int p=pick(hand,5);
+	std::cout<<p<<std::endl;
 	return std::move(hand);
 }
 

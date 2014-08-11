@@ -161,13 +161,24 @@ bool check_straight_flush(card_list &cards,hand_type &hand,int n){
 
 bool check_four(card_list &cards,hand_type &hand,int n){
 	sort_cards_rank(cards,n);
-	for(int i=0;i<n;++i){
-		int j=i+1;
-		for(;(j<n)&&(convert_rank(cards[j])==convert_rank(cards[i]));++j);
-		if(j>=n) break;
-		if(j-i==4){
-			for(int k=i;k<j;++k){
-				hand[k-i]=cards[k];
+	for(int i=0;i<n-4;++i){
+		/*int j=i+1;
+		int flag=1;
+		for(;(j<n);++j){
+			if(convert_rank(cards[j])==convert_rank(cards[i])){
+				++flag;
+				if(flag==4)	break;
+			}else{
+				break;
+			}
+		}*/
+		bool flag=true;
+		flag=flag && (convert_rank(cards[i])==convert_rank(cards[i+1]));
+		flag=flag && (convert_rank(cards[i])==convert_rank(cards[i+2]));
+		flag=flag && (convert_rank(cards[i])==convert_rank(cards[i+3]));
+		if(flag){
+			for(int k=0;k<4;++k){
+				hand[k]=cards[k+i];
 			}
 			int t=0;
 			for(;convert_rank(cards[i])==convert_rank(cards[t]);++t);
@@ -180,13 +191,24 @@ bool check_four(card_list &cards,hand_type &hand,int n){
 
 bool check_three(card_list &cards,hand_type &hand,int n){
 	sort_cards_rank(cards,n);
-	for(int i=0;i<n;++i){
-		int j=i+1;
-		for(;(j<n)&&(convert_rank(cards[j])==convert_rank(cards[i]));++j);
-		if(j>=n) break;
-		if(j-i==3){
-			for(int k=i;k<j;++k){
-				hand[k-i]=cards[k];
+	for(int i=0;i<n-3;++i){
+		/*int j=i+1;
+		bool flag=1;
+		for(;(j<n);++j){
+			if(convert_rank(cards[j])==convert_rank(cards[i])){
+				++flag;
+				if(flag==3) break;
+			}else{
+				break;
+			}
+		}*/
+		//if(j>=n) break;
+		bool flag=true;
+		flag=flag && (convert_rank(cards[i])==convert_rank(cards[i+1]));
+		flag=flag && (convert_rank(cards[i])==convert_rank(cards[i+2]));
+		if(flag){
+			for(int k=0;k<3;++k){
+				hand[k]=cards[k+i];
 			}
 			int t=0;
 			for(;convert_rank(cards[i])==convert_rank(cards[t]);++t);
@@ -276,9 +298,9 @@ int Player::pick(hand_type &hand,int n){
 		flag=7;
 	}else if(check_full_house(all_cards,hand,n)){
 		flag=6;
-	}else if(check_straight(all_cards,hand,n)){
-		flag=5;
 	}else if(check_flush(all_cards,hand,n)){
+		flag=5;
+	}else if(check_straight(all_cards,hand,n)){
 		flag=4;
 	}else if(check_three(all_cards,hand,n)){
 		flag=3;
@@ -387,7 +409,7 @@ decision_type Player::preflop() {
 
 decision_type Player::flop() {
 	int d=get_delta();
-	if(d==0) return make_decision(CALL);
+	//if(d==0) return make_decision(CALL);
 	hand_type hand;
 	int p=pick(hand,3);
 	std::cout<<p<<std::endl;
@@ -410,7 +432,7 @@ decision_type Player::flop() {
 
 decision_type Player::turn() {
 	int d=get_delta();
-	if(d==0) return make_decision(CALL);
+	//if(d==0) return make_decision(CALL);
 	hand_type hand;
 	int p=pick(hand,4);
 	std::cout<<p<<std::endl;
@@ -433,7 +455,7 @@ decision_type Player::turn() {
 
 decision_type Player::river() {
 	int d=get_delta();
-	if(d==0) return make_decision(CALL);
+	//if(d==0) return make_decision(CALL);
 	hand_type hand;
 	int p=pick(hand,5);
 	std::cout<<p<<std::endl;

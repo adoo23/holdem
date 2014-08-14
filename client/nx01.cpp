@@ -386,12 +386,15 @@ int Player::get_pp(){
 }
 
 decision_type Player::preflop() {
+	int t=query.current_bets(query.my_id());
+	if(t>0) return make_decision(CALL);
 	int a=convert_rank(query.hole_cards()[0]);
 	int b=convert_rank(query.hole_cards()[1]);
 	int d=get_delta();
 	int bl=query.blind();
 	bool flag;
 	if(a==b){
+		if(d>1000) flag=false;
 		flag=true;
 	}else if(d>bl){
 		if(d>bl*3) flag=false;
@@ -413,7 +416,7 @@ decision_type Player::flop() {
 	hand_type hand;
 	int p=pick(hand,3);
 	std::cout<<p<<std::endl;
-	if(p>=4) make_decision(RAISE,get_avai());
+	if(p>=4) make_decision(RAISE,10000);
 	if((p>=1)&&(get_pp()<=3)) make_decision(CALL);
 	if(d>=300){
 		if(p>=3){
@@ -436,7 +439,7 @@ decision_type Player::turn() {
 	hand_type hand;
 	int p=pick(hand,4);
 	std::cout<<p<<std::endl;
-	if(p>=4) make_decision(RAISE,get_avai());
+	if(p>=4) make_decision(RAISE,10000);
 	if((p>=1)&&(get_pp()<=3)) make_decision(CALL);
 	if(d>=300){
 		if(p>=4){
@@ -459,7 +462,7 @@ decision_type Player::river() {
 	hand_type hand;
 	int p=pick(hand,5);
 	std::cout<<p<<std::endl;
-	if(p>=4) make_decision(RAISE,get_avai());
+	if(p>=4) make_decision(RAISE,10000);
 	if((p>=1)&&(get_pp()<=3)) make_decision(CALL);
 	if(d>=300){
 		if(p>=4){

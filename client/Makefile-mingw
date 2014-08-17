@@ -4,7 +4,7 @@
 ## Change BOOST_PATH to the location where boost is located
 
 BOOST_PATH = D:\boost_1_55_0
-AI = example
+AI = NX01
 
 TARGET = client.exe
 LIBS = -lws2_32 -lmswsock -l:libboost_system-mgw48-mt-1_55.a

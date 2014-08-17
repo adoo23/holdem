@@ -25,6 +25,7 @@ public:
 	void game_end();
 
 	int pick(hand_type &hand,int n);
+	int pick2(int n);
 	int get_delta();
 	int get_avai();
 	int get_pp();

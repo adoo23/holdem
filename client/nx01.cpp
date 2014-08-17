@@ -316,7 +316,48 @@ int Player::pick(hand_type &hand,int n){
 	}
 	return flag;
 }
-
+int Player::pick2(int n){
+	hand_type hand;
+	card_list all_cards;
+	all_cards.resize(7);
+	//all_cards[0]=query.hole_cards()[0];
+	//all_cards[1]=query.hole_cards()[1];
+	all_cards[0].first='0';
+	all_cards[0].second='?';
+	all_cards[1].first='0';
+	all_cards[1].second='?';
+	const auto& community_cards = query.community_cards();
+	for(int i=0;i<n;++i) all_cards[i+2]=community_cards[i];
+	n+=2;
+	/*bool flag=check_straight_flush(all_cards,hand,n) || check_four(all_cards,hand,n) ||
+		check_full_house(all_cards,hand,n) || check_flush(all_cards,hand,7) ||
+		check_straight(all_cards,hand,7) || check_three(all_cards,hand,7) ||
+		check_two_pairs(all_cards,hand,7) || check_pair(all_cards,hand,7);*/
+	int flag=0;
+	if(check_straight_flush(all_cards,hand,n)){
+		flag=8;
+	}else if(check_four(all_cards,hand,n)){
+		flag=7;
+	}else if(check_full_house(all_cards,hand,n)){
+		flag=6;
+	}else if(check_flush(all_cards,hand,n)){
+		flag=5;
+	}else if(check_straight(all_cards,hand,n)){
+		flag=4;
+	}else if(check_three(all_cards,hand,n)){
+		flag=3;
+	}else if(check_two_pairs(all_cards,hand,n)){
+		flag=2;
+	}else if(check_pair(all_cards,hand,n)){
+		flag=1;
+	}
+	if(!flag){
+		sort_cards_rank(all_cards,n);
+		for(int i=0;i<5;++i) hand[i]=all_cards[i];
+		flag=0;
+	}
+	return flag;
+}
 void Player::init() {}
 void Player::destroy() {}
 
@@ -387,11 +428,11 @@ int Player::get_pp(){
 
 decision_type Player::preflop() {
 	int t=query.current_bets(query.my_id());
-	if(t>0) return make_decision(CALL);
+	int bl=query.blind();
+	if(t>bl) return make_decision(CALL);
 	int a=convert_rank(query.hole_cards()[0]);
 	int b=convert_rank(query.hole_cards()[1]);
 	int d=get_delta();
-	int bl=query.blind();
 	bool flag;
 	if(a==b){
 		if(d>1000) flag=false;
@@ -411,13 +452,15 @@ decision_type Player::preflop() {
 }
 
 decision_type Player::flop() {
+	int bl=query.blind();
 	int d=get_delta();
 	//if(d==0) return make_decision(CALL);
 	hand_type hand;
 	int p=pick(hand,3);
+	int p2=pick2(3);
 	std::cout<<p<<std::endl;
-	if(p>=4) make_decision(RAISE,10000);
-	if((p>=1)&&(get_pp()<=3)) make_decision(CALL);
+	if((p>=4)&&(p2<p)) return make_decision(RAISE,4*bl);
+	//if((p>=1)&&(get_pp()<=3)) return make_decision(CALL);
 	if(d>=300){
 		if(p>=3){
 			return make_decision(CALL);	
@@ -434,13 +477,15 @@ decision_type Player::flop() {
 }
 
 decision_type Player::turn() {
+	int bl=query.blind();
 	int d=get_delta();
 	//if(d==0) return make_decision(CALL);
 	hand_type hand;
 	int p=pick(hand,4);
+	int p2=pick2(4);
 	std::cout<<p<<std::endl;
-	if(p>=4) make_decision(RAISE,10000);
-	if((p>=1)&&(get_pp()<=3)) make_decision(CALL);
+	if((p>=4)&&(p2<p)) return make_decision(RAISE,4*bl);
+	//if((p>=1)&&(get_pp()<=3)) return make_decision(CALL);
 	if(d>=300){
 		if(p>=4){
 			return make_decision(CALL);	
@@ -461,9 +506,10 @@ decision_type Player::river() {
 	//if(d==0) return make_decision(CALL);
 	hand_type hand;
 	int p=pick(hand,5);
+	int p2=pick2(5);
 	std::cout<<p<<std::endl;
-	if(p>=4) make_decision(RAISE,10000);
-	if((p>=1)&&(get_pp()<=3)) make_decision(CALL);
+	if((p>=4)&&(p2<p)) return make_decision(RAISE,10000);
+	//if((p>=1)&&(get_pp()<=3)) return make_decision(CALL);
 	if(d>=300){
 		if(p>=4){
 			return make_decision(CALL);	
